@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Bitácoras de Seguridad</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --teal:      #007c89;
+  --teal-lt:   #71aeb7;
+  --teal-pale: #e8f4f6;
+  --navy:      #003660;
+  --navy-lt:   #0a4a7a;
+  --emerald:   #006b35;
+  --dust:      #f2efec;
+  --white:     #ffffff;
+  --ink:       #1a2e3a;
+  --ink-mid:   #3d5a66;
+  --border:    #c2d8dd;
+  --ok:        #006b35;
+  --warn:      #c87533;
+  --error:     #c0392b;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--dust); color: var(--ink); min-height: 100vh; }
+
+/* HEADER */
+header {
+  background: var(--navy);
+  color: var(--white);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-logo { height: 36px; width: auto; }
+.header-texts h1 { font-size: 0.92rem; font-weight: 700; color: var(--white); line-height: 1.2; }
+.header-texts span { font-size: 0.72rem; color: var(--teal-lt); }
+#btn-logout { background: transparent; border: 1px solid rgba(255,255,255,0.3); color: var(--white); padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; cursor: pointer; font-family: inherit; }
+#btn-logout:hover { background: rgba(255,255,255,0.1); }
+
+/* LOGIN */
+#pantalla-login { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; background: var(--dust); }
+.login-card { background: var(--white); border-radius: 12px; border: 1px solid var(--border); padding: 36px 28px; width: 100%; max-width: 360px; box-shadow: 0 4px 24px rgba(0,54,96,0.10); }
+.login-logo-wrap { text-align: center; margin-bottom: 8px; }
+.login-logo-wrap img { height: 64px; width: auto; }
+.login-modulo { text-align: center; margin-bottom: 28px; }
+.login-modulo-titulo { font-size: 1rem; font-weight: 700; color: var(--navy); }
+.login-modulo-sub { font-size: 0.78rem; color: var(--teal-lt); margin-top: 2px; }
+
+/* FORMS */
+.form-group { margin-bottom: 16px; }
+label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--ink-mid); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+input, select { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.92rem; color: var(--ink); background: var(--white); outline: none; font-family: inherit; transition: border-color 0.2s, box-shadow 0.2s; }
+input:focus, select:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(0,124,137,0.10); }
+
+/* BOTONES */
+.btn-primary { width: 100%; background: var(--navy); color: var(--white); border: none; padding: 12px; border-radius: 8px; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+.btn-primary:hover { background: var(--navy-lt); }
+.btn-primary:disabled { opacity: 0.5; }
+.btn-buscar { background: var(--navy); color: var(--white); border: none; padding: 10px 22px; border-radius: 8px; font-size: 0.88rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+.btn-buscar:hover { background: var(--navy-lt); }
+.btn-export { background: var(--emerald); color: var(--white); border: none; padding: 10px 18px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 6px; transition: background 0.2s; }
+.btn-export:hover { background: #005a2b; }
+.btn-export:disabled { opacity: 0.5; }
+.btn-icon { background: var(--white); border: 1px solid var(--border); padding: 7px 14px; border-radius: 6px; font-size: 0.82rem; cursor: pointer; color: var(--ink-mid); font-family: inherit; transition: background 0.2s; }
+.btn-icon:hover { background: var(--teal-pale); }
+
+/* MENSAJES */
+.mensaje { padding: 10px 14px; border-radius: 8px; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px; display: none; }
+.mensaje.ok    { background: #e6f4ec; color: var(--ok);    border: 1px solid #b6d9c3; }
+.mensaje.error { background: #fdecea; color: var(--error); border: 1px solid #f5c6c2; }
+.mensaje.warn  { background: #fef6ec; color: var(--warn);  border: 1px solid #f5ddb8; }
+
+/* APP */
+#pantalla-app { display: none; }
+.main-container { max-width: 1100px; margin: 0 auto; padding: 24px 20px 48px; }
+
+/* TABS */
+.tabs { display: flex; background: var(--white); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 24px; }
+.tab-btn { flex: 1; padding: 12px 16px; border: none; background: transparent; font-family: inherit; font-size: 0.88rem; font-weight: 700; color: var(--ink-mid); cursor: pointer; transition: all 0.2s; border-bottom: 3px solid transparent; }
+.tab-btn:hover { background: var(--teal-pale); color: var(--teal); }
+.tab-btn.activo { color: var(--teal); border-bottom-color: var(--teal); background: var(--teal-pale); }
+.tab-panel { display: none; }
+.tab-panel.activo { display: block; }
+
+/* CARD */
+.card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,54,96,0.06); }
+.card-title { font-size: 0.78rem; font-weight: 700; color: var(--teal); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--teal-pale); }
+
+/* STATS */
+.stats-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.stat-card { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 16px 14px; text-align: center; box-shadow: 0 1px 4px rgba(0,54,96,0.05); }
+.stat-num { font-size: 1.9rem; font-weight: 800; color: var(--navy); }
+.stat-label { font-size: 0.7rem; color: var(--ink-mid); text-transform: uppercase; letter-spacing: 0.4px; margin-top: 4px; }
+
+/* FILTROS */
+.filtros-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.filtros-acciones { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+/* TABLA */
+.tabla-container { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
+thead tr { background: var(--teal-pale); }
+th { padding: 10px 12px; text-align: left; font-size: 0.72rem; font-weight: 700; color: var(--teal); text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; }
+tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+tbody tr:hover { background: var(--dust); }
+td { padding: 10px 12px; vertical-align: middle; }
+
+.badge { font-size: 0.68rem; font-weight: 700; padding: 3px 8px; border-radius: 20px; text-transform: uppercase; white-space: nowrap; }
+.badge-ronda         { background: var(--teal-pale); color: var(--teal); }
+.badge-incidente     { background: #fdecea; color: var(--error); }
+.badge-entrega_turno { background: #fef6ec; color: var(--warn); }
+
+.td-desc { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-mid); font-size: 0.82rem; }
+.foto-thumb { width: 36px; height: 36px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 1px solid var(--border); }
+
+/* PAGINACIÓN */
+.paginacion { display: flex; align-items: center; justify-content: space-between; padding: 14px 0 0; flex-wrap: wrap; gap: 10px; }
+.pag-info { font-size: 0.82rem; color: var(--ink-mid); }
+.pag-btns { display: flex; gap: 6px; }
+.pag-btn { background: var(--white); border: 1px solid var(--border); padding: 6px 12px; border-radius: 6px; font-size: 0.82rem; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+.pag-btn:hover { background: var(--teal-pale); }
+.pag-btn:disabled { opacity: 0.4; cursor: default; }
+.pag-btn.activo { background: var(--teal); color: var(--white); border-color: var(--teal); }
+
+/* MODALES */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.visible { display: flex; }
+.modal-box { background: var(--white); border-radius: 14px; max-width: 560px; width: 100%; max-height: 88vh; overflow-y: auto; box-shadow: 0 8px 40px rgba(0,0,0,0.2); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--white); z-index: 1; }
+.modal-header h2 { font-size: 0.95rem; font-weight: 700; color: var(--navy); }
+.modal-body { padding: 20px; }
+.detalle-fila { display: flex; gap: 10px; margin-bottom: 12px; font-size: 0.88rem; align-items: flex-start; }
+.detalle-fila strong { min-width: 140px; color: var(--ink-mid); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.3px; padding-top: 2px; }
+.detalle-fila span { color: var(--ink); flex: 1; }
+.detalle-firma { margin-top: 14px; }
+.detalle-firma label { margin-bottom: 6px; }
+.detalle-firma img { max-width: 100%; border: 1px solid var(--border); border-radius: 8px; }
+
+/* AUDITORÍA */
+.auditoria-item { border-left: 3px solid var(--teal-lt); padding: 10px 14px; margin-bottom: 10px; background: var(--teal-pale); border-radius: 0 8px 8px 0; font-size: 0.85rem; }
+.audit-meta { font-size: 0.75rem; color: var(--ink-mid); margin-bottom: 4px; }
+.audit-accion { font-weight: 700; color: var(--teal); margin-right: 6px; text-transform: uppercase; }
+
+/* LOADING / EMPTY */
+.loading { text-align: center; padding: 32px; color: var(--ink-mid); font-size: 0.88rem; }
+.spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--teal); border-radius: 50%; animation: spin 0.7s linear infinite; margin-bottom: 8px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty-state { text-align: center; padding: 40px; color: var(--ink-mid); }
+.empty-icon { font-size: 2rem; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="pantalla-login">
+  <div class="login-card">
+    <div class="login-logo-wrap">
+      <img src="PDM_Logo_Transparent.png" alt="Paraíso del Mar">
+    </div>
+    <div class="login-modulo">
+      <div class="login-modulo-titulo">📋 Bitácoras de Seguridad</div>
+      <div class="login-modulo-sub">Panel de administración</div>
+    </div>
+    <div id="msg-login" class="mensaje"></div>
+    <div class="form-group"><label>Usuario</label><input type="text" id="login-usuario" autocomplete="username"></div>
+    <div class="form-group"><label>Contraseña</label><input type="password" id="login-password" autocomplete="current-password"></div>
+    <button class="btn-primary" id="btn-login">Entrar</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="pantalla-app">
+  <header>
+    <div class="header-left">
+      <img src="PDM_Logo_Transparent.png" alt="Paraíso del Mar" class="header-logo">
+      <div class="header-texts">
+        <h1>📋 Bitácoras de Seguridad</h1>
+        <span id="header-nombre"></span>
+      </div>
+    </div>
+    <button id="btn-logout">Salir</button>
+  </header>
+
+  <div class="main-container">
+    <div id="msg-app" class="mensaje"></div>
+
+    <div class="tabs">
+      <button class="tab-btn activo" data-tab="registros">Registros</button>
+      <button class="tab-btn" data-tab="auditoria">Auditoría</button>
+    </div>
+
+    <!-- TAB REGISTROS -->
+    <div class="tab-panel activo" id="tab-registros">
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-num" id="stat-total">—</div><div class="stat-label">Total</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-rondas">—</div><div class="stat-label">Rondas</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-incidentes">—</div><div class="stat-label">Incidentes</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-turnos">—</div><div class="stat-label">Turnos</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Filtros</div>
+        <div class="filtros-grid">
+          <div class="form-group" style="margin:0"><label>Fecha desde</label><input type="date" id="f-desde"></div>
+          <div class="form-group" style="margin:0"><label>Fecha hasta</label><input type="date" id="f-hasta"></div>
+          <div class="form-group" style="margin:0"><label>Guardia</label>
+            <select id="f-guardia"><option value="">Todos</option></select>
+          </div>
+          <div class="form-group" style="margin:0"><label>Tipo</label>
+            <select id="f-tipo">
+              <option value="">Todos</option>
+              <option value="ronda">Ronda</option>
+              <option value="incidente">Incidente</option>
+              <option value="entrega_turno">Entrega de Turno</option>
+            </select>
+          </div>
+        </div>
+        <div class="filtros-acciones">
+          <button class="btn-buscar" onclick="buscar()">Buscar</button>
+          <button class="btn-icon" onclick="limpiarFiltros()">Limpiar</button>
+          <button class="btn-export" id="btn-export" onclick="exportarExcel()">Exportar Excel</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="tabla-container" id="tabla-container">
+          <div class="loading"><div class="spinner"></div><br>Cargando registros...</div>
+        </div>
+        <div class="paginacion" id="paginacion" style="display:none">
+          <span class="pag-info" id="pag-info"></span>
+          <div class="pag-btns" id="pag-btns"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB AUDITORÍA -->
+    <div class="tab-panel" id="tab-auditoria">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div class="card-title" style="margin:0;border:none;padding:0">Auditoría Global</div>
+          <button class="btn-icon" onclick="cargarAuditoria()">Actualizar</button>
+        </div>
+        <div id="auditoria-container">
+          <div class="loading"><div class="spinner"></div><br>Cargando auditoría...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal detalle -->
+<div class="modal-overlay" id="modal-detalle">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Detalle del Registro</h2>
+      <button class="btn-icon" onclick="cerrarModal('modal-detalle')">✕ Cerrar</button>
+    </div>
+    <div class="modal-body" id="modal-detalle-body"></div>
+  </div>
+</div>
+
+<!-- Modal foto -->
+<div class="modal-overlay" id="modal-foto" onclick="cerrarModal('modal-foto')">
+  <img id="modal-foto-img" src="" alt="foto" style="max-width:90vw;max-height:85vh;border-radius:10px">
+</div>
+
+<script>
+const API = 'https://paraiso-del-mar-backend.onrender.com';
+let token = null;
+let usuarioActual = null;
+let paginaActual = 1;
+const POR_PAGINA = 20;
+let totalRegistros = 0;
+
+const TIPO_LABELS  = { ronda: 'Ronda', incidente: 'Incidente', entrega_turno: 'Entrega Turno' };
+const PUNTO_LABELS = { muelle: 'Muelle Principal', base4: 'Base 4', base1: 'Base 1' };
+
+// ══ AUTH ══
+document.getElementById('btn-login').addEventListener('click', async () => {
+  const usuario  = document.getElementById('login-usuario').value.trim();
+  const password = document.getElementById('login-password').value.trim();
+  if (!usuario || !password) return msg('msg-login', 'Completa los campos', 'error');
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  try {
+    const res = await fetch(`${API}/api/auth/login`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usuario, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.mensaje || 'Credenciales incorrectas');
+    token = data.token;
+    usuarioActual = data.usuario || data;
+    sessionStorage.setItem('pdm_acceso_token', token);
+    iniciarApp();
+  } catch(e) {
+    msg('msg-login', e.message, 'error');
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+});
+document.getElementById('login-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('btn-login').click();
+});
+document.getElementById('btn-logout').addEventListener('click', () => {
+  sessionStorage.removeItem('pdm_acceso_token');
+  document.getElementById('pantalla-app').style.display = 'none';
+  document.getElementById('pantalla-login').style.display = 'flex';
+});
+
+async function fetchConAuth(url, opciones = {}) {
+  const res = await fetch(url, {
+    ...opciones,
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', ...opciones.headers }
+  });
+  if (res.status === 401) { sessionStorage.removeItem('pdm_acceso_token'); location.reload(); }
+  return res;
+}
+
+function iniciarApp() {
+  document.getElementById('pantalla-login').style.display = 'none';
+  document.getElementById('pantalla-app').style.display = 'block';
+  document.getElementById('header-nombre').textContent = usuarioActual.nombre || '';
+  const hoy = new Date().toISOString().split('T')[0];
+  document.getElementById('f-desde').value = hoy;
+  document.getElementById('f-hasta').value = hoy;
+  cargarGuardias();
+  buscar();
+}
+
+// ══ TABS ══
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('activo'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('activo'));
+    btn.classList.add('activo');
+    document.getElementById(`tab-${btn.dataset.tab}`).classList.add('activo');
+    if (btn.dataset.tab === 'auditoria') cargarAuditoria();
+  });
+});
+
+// ══ GUARDIAS ══
+async function cargarGuardias() {
+  try {
+    const res = await fetch(`${API}/api/auth/usuarios-publico`);
+    const data = await res.json();
+    const sel = document.getElementById('f-guardia');
+    const lista = data.usuarios || data.data || data || [];
+    lista.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u.id; opt.textContent = u.nombre;
+      sel.appendChild(opt);
+    });
+  } catch(e) {}
+}
+
+// ══ BÚSQUEDA ══
+function buildQuery(pagina = 1) {
+  const params = new URLSearchParams();
+  const desde   = document.getElementById('f-desde').value;
+  const hasta   = document.getElementById('f-hasta').value;
+  const guardia = document.getElementById('f-guardia').value;
+  const tipo    = document.getElementById('f-tipo').value;
+  if (desde)   params.set('fecha_desde', desde);
+  if (hasta)   params.set('fecha_hasta', hasta);
+  if (guardia) params.set('guardia_id', guardia);
+  if (tipo)    params.set('tipo', tipo);
+  params.set('pagina', pagina);
+  params.set('por_pagina', POR_PAGINA);
+  return params.toString();
+}
+
+async function buscar(pagina = 1) {
+  paginaActual = pagina;
+  const container = document.getElementById('tabla-container');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><br>Buscando...</div>';
+  document.getElementById('paginacion').style.display = 'none';
+  try {
+    const res  = await fetchConAuth(`${API}/api/bitacoras?${buildQuery(pagina)}`);
+    const data = await res.json();
+    const registros = data.data || data.registros || [];
+    totalRegistros  = data.total || registros.length;
+    actualizarStats(registros);
+    renderTabla(registros, container);
+    renderPaginacion(totalRegistros, pagina);
+  } catch(e) {
+    container.innerHTML = '<div class="loading">Error al cargar registros</div>';
+  }
+}
+
+function limpiarFiltros() {
+  const hoy = new Date().toISOString().split('T')[0];
+  document.getElementById('f-desde').value = hoy;
+  document.getElementById('f-hasta').value = hoy;
+  document.getElementById('f-guardia').value = '';
+  document.getElementById('f-tipo').value = '';
+  buscar();
+}
+
+function actualizarStats(registros) {
+  document.getElementById('stat-total').textContent      = totalRegistros;
+  document.getElementById('stat-rondas').textContent     = registros.filter(r => r.tipo === 'ronda').length;
+  document.getElementById('stat-incidentes').textContent = registros.filter(r => r.tipo === 'incidente').length;
+  document.getElementById('stat-turnos').textContent     = registros.filter(r => r.tipo === 'entrega_turno').length;
+}
+
+// ══ TABLA ══
+function renderTabla(registros, container) {
+  if (!registros.length) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>Sin registros con estos filtros</p></div>';
+    return;
+  }
+  const tabla = document.createElement('table');
+  tabla.innerHTML = `<thead><tr>
+    <th>Fecha / Hora</th><th>Tipo</th><th>Guardia</th><th>Punto</th><th>Descripción</th><th>Foto</th><th></th>
+  </tr></thead><tbody></tbody>`;
+  const tbody = tabla.querySelector('tbody');
+  registros.forEach(r => {
+    const tr = document.createElement('tr');
+    const hora = new Date(r.created_at).toLocaleString('es-MX', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    tr.innerHTML = `
+      <td style="white-space:nowrap;font-size:0.82rem;color:var(--ink-mid)">${hora}</td>
+      <td><span class="badge badge-${r.tipo}">${TIPO_LABELS[r.tipo] || r.tipo}</span></td>
+      <td style="font-size:0.85rem">${r.guardia_nombre || r.guardia_id || '—'}</td>
+      <td style="font-size:0.82rem;color:var(--ink-mid)">${PUNTO_LABELS[r.punto_acceso] || r.punto_acceso || '—'}</td>
+      <td class="td-desc" title="${r.descripcion || ''}">${r.descripcion || '—'}</td>
+      <td>${r.foto_url ? `<img class="foto-thumb" src="${r.foto_url}" onclick="abrirFoto('${r.foto_url}')">` : '—'}</td>
+      <td><button class="btn-icon" onclick="verDetalle(${r.id})">Ver</button></td>`;
+    tbody.appendChild(tr);
+  });
+  container.innerHTML = '';
+  container.appendChild(tabla);
+}
+
+// ══ PAGINACIÓN ══
+function renderPaginacion(total, pagina) {
+  const totalPaginas = Math.ceil(total / POR_PAGINA);
+  if (totalPaginas <= 1) { document.getElementById('paginacion').style.display = 'none'; return; }
+  document.getElementById('paginacion').style.display = 'flex';
+  document.getElementById('pag-info').textContent = `${total} registros — Página ${pagina} de ${totalPaginas}`;
+  const btns = document.getElementById('pag-btns');
+  btns.innerHTML = '';
+  const prev = document.createElement('button');
+  prev.className = 'pag-btn'; prev.textContent = '← Ant';
+  prev.disabled = pagina === 1; prev.onclick = () => buscar(pagina - 1);
+  btns.appendChild(prev);
+  for (let i = Math.max(1, pagina - 2); i <= Math.min(totalPaginas, pagina + 2); i++) {
+    const b = document.createElement('button');
+    b.className = `pag-btn${i === pagina ? ' activo' : ''}`;
+    b.textContent = i; b.onclick = () => buscar(i);
+    btns.appendChild(b);
+  }
+  const next = document.createElement('button');
+  next.className = 'pag-btn'; next.textContent = 'Sig →';
+  next.disabled = pagina === totalPaginas; next.onclick = () => buscar(pagina + 1);
+  btns.appendChild(next);
+}
+
+// ══ DETALLE ══
+async function verDetalle(id) {
+  try {
+    const res  = await fetchConAuth(`${API}/api/bitacoras/${id}`);
+    const data = await res.json();
+    const r = data.data || data;
+    const hora = new Date(r.created_at).toLocaleString('es-MX', { dateStyle: 'long', timeStyle: 'short' });
+    const body = document.getElementById('modal-detalle-body');
+    body.innerHTML = `
+      <div class="detalle-fila"><strong>Tipo</strong><span><span class="badge badge-${r.tipo}">${TIPO_LABELS[r.tipo] || r.tipo}</span></span></div>
+      <div class="detalle-fila"><strong>Guardia</strong><span>${r.guardia_nombre || r.guardia_id || '—'}</span></div>
+      <div class="detalle-fila"><strong>Punto de acceso</strong><span>${PUNTO_LABELS[r.punto_acceso] || r.punto_acceso || '—'}</span></div>
+      <div class="detalle-fila"><strong>Fecha y hora</strong><span>${hora}</span></div>
+      <div class="detalle-fila"><strong>Descripción</strong><span>${r.descripcion || '—'}</span></div>
+      <div class="detalle-fila"><strong>Observaciones</strong><span>${r.observaciones || '—'}</span></div>
+      ${r.foto_url ? `<div class="detalle-fila"><strong>Foto</strong><span><img src="${r.foto_url}" style="max-width:100%;border-radius:8px;cursor:pointer;border:1px solid var(--border)" onclick="abrirFoto('${r.foto_url}')"></span></div>` : ''}
+      ${r.firma_saliente ? `<div class="detalle-firma"><label>Firma Guardia Saliente</label><img src="${r.firma_saliente}"></div>` : ''}
+      ${r.firma_entrante ? `<div class="detalle-firma" style="margin-top:14px"><label>Firma Guardia Entrante</label><img src="${r.firma_entrante}"></div>` : ''}`;
+    document.getElementById('modal-detalle').classList.add('visible');
+  } catch(e) { msg('msg-app', 'Error al cargar detalle', 'error'); }
+}
+
+// ══ AUDITORÍA ══
+async function cargarAuditoria() {
+  const container = document.getElementById('auditoria-container');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div><br>Cargando auditoría...</div>';
+  try {
+    const res  = await fetchConAuth(`${API}/api/bitacoras/auditoria`);
+    const data = await res.json();
+    const registros = data.data || data || [];
+    if (!registros.length) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><p>Sin eventos de auditoría</p></div>';
+      return;
+    }
+    container.innerHTML = '';
+    registros.forEach(a => {
+      const div = document.createElement('div');
+      div.className = 'auditoria-item';
+      const hora = new Date(a.created_at || a.fecha).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' });
+      div.innerHTML = `
+        <div class="audit-meta">
+          <span class="audit-accion">${a.accion || ''}</span>
+          ${a.usuario_nombre || a.usuario_id || ''} · ${hora}
+          ${a.registro_id ? `· Registro #${a.registro_id}` : ''}
+        </div>
+        ${a.detalle || a.descripcion || ''}`;
+      container.appendChild(div);
+    });
+  } catch(e) {
+    container.innerHTML = '<div class="loading">Error al cargar auditoría</div>';
+  }
+}
+
+// ══ EXPORTAR ══
+async function exportarExcel() {
+  const btn = document.getElementById('btn-export');
+  btn.textContent = 'Exportando...'; btn.disabled = true;
+  try {
+    const query = buildQuery(1).replace(/&?pagina=\d+/, '').replace(/&?por_pagina=\d+/, '');
+    const res = await fetchConAuth(`${API}/api/bitacoras/export?${query}`, {
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+    });
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('spreadsheet') || contentType.includes('octet-stream')) {
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = `bitacoras-${new Date().toISOString().split('T')[0]}.xlsx`;
+      a.click(); URL.revokeObjectURL(url);
+    } else {
+      const data = await res.json();
+      exportarExcelLocal(data.data || data || []);
+    }
+  } catch(e) {
+    msg('msg-app', 'Error al exportar', 'error');
+  } finally {
+    btn.textContent = 'Exportar Excel'; btn.disabled = false;
+  }
+}
+
+function exportarExcelLocal(registros) {
+  const filas = registros.map(r => ({
+    'ID':             r.id,
+    'Fecha':          new Date(r.created_at).toLocaleString('es-MX'),
+    'Tipo':           TIPO_LABELS[r.tipo] || r.tipo,
+    'Guardia':        r.guardia_nombre || r.guardia_id || '',
+    'Punto de Acceso': PUNTO_LABELS[r.punto_acceso] || r.punto_acceso || '',
+    'Descripción':    r.descripcion || '',
+    'Observaciones':  r.observaciones || '',
+    'Tiene Foto':     r.foto_url ? 'Sí' : 'No'
+  }));
+  const ws = XLSX.utils.json_to_sheet(filas);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Bitácoras');
+  XLSX.writeFile(wb, `bitacoras-${new Date().toISOString().split('T')[0]}.xlsx`);
+}
+
+// ══ UTILS ══
+function msg(id, texto, tipo = 'ok') {
+  const el = document.getElementById(id);
+  el.textContent = texto; el.className = `mensaje ${tipo}`; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+function abrirFoto(url) {
+  document.getElementById('modal-foto-img').src = url;
+  document.getElementById('modal-foto').classList.add('visible');
+}
+function cerrarModal(id) { document.getElementById(id).classList.remove('visible'); }
+
+// Auto-login
+window.addEventListener('DOMContentLoaded', () => {
+  const t = sessionStorage.getItem('pdm_acceso_token');
+  if (t) {
+    token = t;
+    try {
+      const payload = JSON.parse(atob(t.split('.')[1]));
+      usuarioActual = payload;
+      iniciarApp();
+    } catch(e) { sessionStorage.removeItem('pdm_acceso_token'); }
+  }
+});
+</script>
+</body>
+</html>
