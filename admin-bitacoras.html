@@ -291,7 +291,7 @@ document.getElementById('btn-login').addEventListener('click', async () => {
   try {
     const res = await fetch(`${API}/api/auth/login`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ usuario, password })
+      body: JSON.stringify({ nombre: usuario, password })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.mensaje || 'Credenciales incorrectas');
