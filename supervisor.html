@@ -1157,7 +1157,7 @@ async function abrirModalGuardia(id = null) {
   const tituloModal = document.getElementById('modal-guardia-titulo');
   if (tituloModal) tituloModal.textContent = esEdicion ? 'Editar Guardia' : 'Nuevo Guardia';
 
-  const campoActivo = document.getElementById('campo-activo-wrap');
+  const campoActivo = document.getElementById('grupo-estado');
   if (campoActivo) campoActivo.style.display = esEdicion ? 'block' : 'none';
 
   const campoPassword = document.getElementById('guardia-password-label');
@@ -1193,7 +1193,7 @@ async function guardarGuardia() {
   if (!nombre) return mostrarMsg('msg-modal-guardia', 'El nombre es requerido', 'error');
   if (!id && !password) return mostrarMsg('msg-modal-guardia', 'La contraseña es requerida al crear', 'error');
 
-  const body = { nombre, rol, punto_default: punto, activo };
+  const body = { nombre, rol, punto_default_id: punto ? parseInt(punto) : null, activo };
   if (password) body.password = password;
 
   const btn = document.getElementById('btn-guardar-guardia');
@@ -1429,8 +1429,8 @@ async function exportarExcel() {
 }
 
 // ══ MODAL HELPERS ══
-function abrirModal(id)  { document.getElementById(id).classList.add('visible'); }
-function cerrarModal(id) { document.getElementById(id).classList.remove('visible'); }
+function abrirModal(id)  { const el = document.getElementById(id); if (el) { el.classList.add('visible'); el.style.display = 'flex'; } }
+function cerrarModal(id) { const el = document.getElementById(id); if (el) { el.classList.remove('visible'); el.style.display = 'none'; } }
 
 document.querySelectorAll('.modal-bg').forEach(m =>
   m.addEventListener('click', e => { if (e.target === m) m.classList.remove('visible'); }));
