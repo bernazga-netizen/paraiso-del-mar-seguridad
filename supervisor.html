@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Supervisión de Seguridad — Paraíso del Mar</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --teal:      #007c89;
+  --teal-lt:   #71aeb7;
+  --teal-pale: #e8f4f6;
+  --navy:      #003660;
+  --navy-lt:   #0a4a7a;
+  --emerald:   #006b35;
+  --dust:      #f2efec;
+  --white:     #ffffff;
+  --ink:       #1a2e3a;
+  --ink-mid:   #3d5a66;
+  --border:    #c2d8dd;
+  --ok:        #006b35;
+  --warn:      #c87533;
+  --error:     #c0392b;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--dust);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+/* ── LOGIN ── */
+#pantalla-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+.login-card {
+  background: var(--white);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 36px 28px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 4px 24px rgba(0,54,96,0.10);
+}
+.login-logo-wrap { text-align: center; margin-bottom: 8px; }
+.login-logo-wrap img { height: 64px; width: auto; }
+.login-modulo { text-align: center; margin-bottom: 28px; }
+.login-modulo-titulo { font-size: 1rem; font-weight: 700; color: var(--navy); }
+.login-modulo-sub { font-size: 0.78rem; color: var(--teal-lt); margin-top: 2px; }
+
+/* ── FORMS ── */
+.form-group { margin-bottom: 16px; }
+label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ink-mid);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+input[type="text"],
+input[type="password"],
+input[type="date"],
+select,
+textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: var(--ink);
+  background: var(--white);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(0,124,137,0.10);
+}
+
+/* ── BUTTONS ── */
+.btn-primary {
+  width: 100%;
+  background: var(--navy);
+  color: var(--white);
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: inherit;
+}
+.btn-primary:hover { background: var(--navy-lt); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-save {
+  background: var(--emerald);
+  color: var(--white);
+  border: none;
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+.btn-save:hover { background: #005a2b; }
+.btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--ink-mid);
+  border: 1px solid var(--border);
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-secondary:hover { background: var(--dust); }
+
+.btn-action {
+  background: var(--teal-pale);
+  color: var(--teal);
+  border: 1px solid var(--teal-lt);
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-action:hover { background: var(--teal); color: var(--white); }
+
+/* ── MENSAJES ── */
+.mensaje {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: none;
+}
+.mensaje.ok    { background: #e6f4ec; color: var(--ok);    border: 1px solid #b6d9c3; }
+.mensaje.error { background: #fdecea; color: var(--error); border: 1px solid #f5c6c2; }
+.mensaje.warn  { background: #fef6ec; color: var(--warn);  border: 1px solid #f5ddb8; }
+
+/* ── HEADER ── */
+header {
+  background: var(--navy);
+  color: var(--white);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-logo { height: 36px; width: auto; }
+.header-texts h1 { font-size: 0.92rem; font-weight: 700; color: var(--white); line-height: 1.2; }
+.header-texts span { font-size: 0.72rem; color: var(--teal-lt); }
+.header-right { display: flex; align-items: center; gap: 10px; }
+
+.badge-rol {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.badge-rol.admin      { background: var(--navy-lt); color: var(--white); border: 1px solid rgba(255,255,255,0.2); }
+.badge-rol.supervisor { background: var(--teal);    color: var(--white); }
+
+#btn-logout {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.3);
+  color: var(--white);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+#btn-logout:hover { background: rgba(255,255,255,0.1); }
+
+/* ── APP LAYOUT ── */
+#pantalla-app { display: none; }
+.app-body {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px 80px;
+}
+
+/* ── TABS desktop ── */
+.tabs-nav {
+  display: flex;
+  gap: 4px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0,54,96,0.06);
+}
+.tab-btn {
+  flex: 1;
+  padding: 10px 8px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink-mid);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.tab-btn:hover { background: var(--teal-pale); color: var(--teal); }
+.tab-btn.activo { background: var(--navy); color: var(--white); }
+.tab-icon { font-size: 1.1rem; }
+
+/* ── BOTTOM NAV mobile ── */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--white);
+  border-top: 1px solid var(--border);
+  z-index: 100;
+  padding: 6px 0 env(safe-area-inset-bottom, 6px);
+}
+.bottom-nav-inner { display: flex; justify-content: space-around; }
+.bottom-nav-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 6px 4px;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: var(--ink-mid);
+  font-size: 0.62rem;
+  font-weight: 600;
+}
+.bottom-nav-btn .nav-icon { font-size: 1.4rem; }
+.bottom-nav-btn.activo { color: var(--teal); }
+
+/* ── PANELS ── */
+.tab-panel { display: none; }
+.tab-panel.activo { display: block; }
+
+/* ── CARD ── */
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,54,96,0.06);
+}
+.card-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--teal);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 18px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--teal-pale);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+/* ── KPI ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.kpi-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 16px;
+  box-shadow: 0 2px 8px rgba(0,54,96,0.06);
+}
+.kpi-label { font-size: 0.72rem; font-weight: 700; color: var(--ink-mid); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.kpi-value { font-size: 2rem; font-weight: 700; color: var(--navy); line-height: 1; }
+.kpi-sub   { font-size: 0.72rem; color: var(--ink-mid); margin-top: 4px; }
+.kpi-card.kpi-warn  .kpi-value { color: var(--warn); }
+.kpi-card.kpi-error .kpi-value { color: var(--error); }
+
+/* ── TABLE ── */
+.table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+thead th {
+  background: var(--teal-pale);
+  color: var(--teal);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 10px 14px;
+  text-align: left;
+  white-space: nowrap;
+}
+tbody tr { border-bottom: 1px solid var(--border); }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--teal-pale); }
+tbody td { padding: 10px 14px; color: var(--ink); vertical-align: middle; }
+
+/* ── BADGES ── */
+.badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.badge-ronda         { background: var(--teal-pale); color: var(--teal); }
+.badge-incidente     { background: #fdecea; color: var(--error); }
+.badge-entrega_turno { background: #fef6ec; color: var(--warn); }
+.badge-guardia       { background: var(--teal-pale); color: var(--teal); }
+.badge-supervisor    { background: #e8f0f8; color: var(--navy); }
+.badge-activo        { background: #e6f4ec; color: var(--ok); }
+.badge-inactivo      { background: #f2f2f2; color: #888; }
+
+/* ── PAGINATION ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 0.82rem;
+  color: var(--ink-mid);
+}
+.page-btn {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: var(--ink-mid);
+}
+.page-btn:hover:not(:disabled) { background: var(--teal-pale); color: var(--teal); }
+.page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── MODAL ── */
+.modal-bg {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal-bg.visible { display: flex; }
+.modal-box {
+  background: var(--white);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 460px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+}
+.modal-header {
+  padding: 18px 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.modal-title { font-size: 1rem; font-weight: 700; color: var(--navy); }
+.btn-modal-close { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--ink-mid); line-height: 1; }
+.modal-body { padding: 0 20px 20px; }
+.modal-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ── TOGGLE ── */
+.toggle-wrap { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+.toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+.toggle input { display: none; }
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle input:checked + .toggle-track { background: var(--teal); }
+.toggle-track::after {
+  content: '';
+  position: absolute;
+  width: 18px; height: 18px;
+  background: var(--white);
+  border-radius: 50%;
+  top: 3px; left: 3px;
+  transition: left 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle input:checked + .toggle-track::after { left: 23px; }
+.toggle-label { font-size: 0.85rem; color: var(--ink); }
+
+/* ── CALENDARIO ── */
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.cal-nav-title { font-size: 0.9rem; font-weight: 700; color: var(--navy); }
+.cal-table-wrap { overflow-x: auto; }
+.cal-table { width: 100%; border-collapse: collapse; min-width: 620px; }
+.cal-table th {
+  background: var(--navy);
+  color: var(--white);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 10px 8px;
+  text-align: center;
+  white-space: nowrap;
+}
+.cal-table .turno-cell {
+  background: var(--teal-pale);
+  color: var(--teal);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 10px 10px;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+  width: 90px;
+}
+.cal-table td { border: 1px solid var(--border); padding: 8px; vertical-align: top; min-width: 80px; }
+.cal-cell { display: flex; flex-direction: column; gap: 4px; min-height: 40px; }
+.cal-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--teal-pale);
+  border: 1px solid var(--teal-lt);
+  border-radius: 6px;
+  padding: 3px 7px;
+  font-size: 0.7rem;
+  color: var(--ink);
+  font-weight: 600;
+  flex-wrap: wrap;
+}
+.cal-chip-punto { font-size: 0.62rem; color: var(--ink-mid); font-weight: 400; }
+.btn-cal-add {
+  background: none;
+  border: 1px dashed var(--teal-lt);
+  color: var(--teal);
+  border-radius: 6px;
+  padding: 3px 6px;
+  font-size: 0.72rem;
+  cursor: pointer;
+  font-family: inherit;
+  align-self: flex-start;
+}
+.btn-cal-add:hover { background: var(--teal-pale); }
+.btn-chip-remove {
+  background: none;
+  border: none;
+  color: var(--error);
+  cursor: pointer;
+  font-size: 0.72rem;
+  padding: 0;
+  line-height: 1;
+  margin-left: auto;
+}
+
+/* ── REPORTES ── */
+.filtros-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.chart-wrap { position: relative; height: 260px; margin-top: 16px; }
+.resumen-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+.resumen-card {
+  background: var(--teal-pale);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 12px;
+  text-align: center;
+}
+.resumen-card .r-value { font-size: 1.6rem; font-weight: 700; color: var(--navy); }
+.resumen-card .r-label { font-size: 0.72rem; color: var(--ink-mid); text-transform: uppercase; font-weight: 700; letter-spacing: 0.4px; margin-top: 4px; }
+
+/* ── LOADING ── */
+.spinner {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--teal);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.cell-loading { text-align: center; padding: 24px; color: var(--ink-mid); font-size: 0.85rem; }
+
+/* ── RESPONSIVE ── */
+@media (min-width: 640px) {
+  .kpi-grid { grid-template-columns: repeat(4, 1fr); }
+  .filtros-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 639px) {
+  .tabs-nav { display: none; }
+  .bottom-nav { display: block; }
+  .app-body { padding-bottom: 90px; }
+  .header-texts h1 { font-size: 0.82rem; }
+  .badge-rol { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════ LOGIN ══════ -->
+<div id="pantalla-login">
+  <div class="login-card">
+    <div class="login-logo-wrap">
+      <img src="PDM_Logo_Transparent.png" alt="Paraíso del Mar">
+    </div>
+    <div class="login-modulo">
+      <div class="login-modulo-titulo">🛡️ Supervisión de Seguridad</div>
+      <div class="login-modulo-sub">Acceso para supervisores y administradores</div>
+    </div>
+    <div id="msg-login" class="mensaje"></div>
+    <div class="form-group">
+      <label>Usuario</label>
+      <input type="text" id="login-usuario" placeholder="Tu nombre de usuario" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>Contraseña</label>
+      <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-primary" id="btn-login">Entrar</button>
+  </div>
+</div>
+
+<!-- ══════ APP ══════ -->
+<div id="pantalla-app">
+  <header>
+    <div class="header-left">
+      <img src="PDM_Logo_Transparent.png" alt="Paraíso del Mar" class="header-logo">
+      <div class="header-texts">
+        <h1>🛡️ Supervisión de Seguridad</h1>
+        <span id="header-nombre"></span>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="badge-rol" id="header-rol-badge"></span>
+      <button id="btn-logout">Salir</button>
+    </div>
+  </header>
+
+  <div class="app-body">
+    <div id="msg-app" class="mensaje"></div>
+
+    <!-- TABS desktop -->
+    <nav class="tabs-nav">
+      <button class="tab-btn activo" data-tab="dashboard"><span class="tab-icon">📊</span> Dashboard</button>
+      <button class="tab-btn" data-tab="guardias"><span class="tab-icon">👮</span> Guardias</button>
+      <button class="tab-btn" data-tab="calendario"><span class="tab-icon">📅</span> Calendario</button>
+      <button class="tab-btn" data-tab="reportes"><span class="tab-icon">📈</span> Reportes</button>
+    </nav>
+
+    <!-- ─── DASHBOARD ─── -->
+    <div class="tab-panel activo" id="panel-dashboard">
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Guardias activos</div>
+          <div class="kpi-value" id="kpi-guardias">—</div>
+          <div class="kpi-sub">en el sistema</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Registros hoy</div>
+          <div class="kpi-value" id="kpi-registros-hoy">—</div>
+          <div class="kpi-sub">bitácoras del día</div>
+        </div>
+        <div class="kpi-card kpi-warn">
+          <div class="kpi-label">Incidentes semana</div>
+          <div class="kpi-value" id="kpi-incidentes">—</div>
+          <div class="kpi-sub">lunes a hoy</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Sin registro hoy</div>
+          <div class="kpi-value" id="kpi-sin-asignar">—</div>
+          <div class="kpi-sub">guardias sin actividad</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>📋 Bitácoras de Hoy</span>
+          <span class="badge" style="background:var(--teal);color:var(--white);font-size:0.72rem;padding:3px 9px" id="badge-hoy">0</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Hora</th>
+                <th>Guardia</th>
+                <th>Tipo</th>
+                <th>Punto</th>
+                <th>Descripción</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-hoy">
+              <tr><td colspan="5" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination" id="pag-dashboard"></div>
+      </div>
+    </div>
+
+    <!-- ─── GUARDIAS ─── -->
+    <div class="tab-panel" id="panel-guardias">
+      <div class="card">
+        <div class="card-title">
+          <span>👮 Gestión de Guardias</span>
+          <button class="btn-save" style="font-size:0.8rem;padding:7px 14px" onclick="abrirModalGuardia()">+ Nuevo Guardia</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Rol</th>
+                <th>Punto Default</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-guardias">
+              <tr><td colspan="5" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── CALENDARIO ─── -->
+    <div class="tab-panel" id="panel-calendario">
+      <div class="card">
+        <div class="card-title">📅 Calendario de Turnos</div>
+        <div class="cal-nav">
+          <button class="btn-secondary" onclick="navSemana(-1)">&#8249; Anterior</button>
+          <span class="cal-nav-title" id="cal-titulo"></span>
+          <button class="btn-secondary" onclick="navSemana(1)">Siguiente &#8250;</button>
+        </div>
+        <div class="cal-table-wrap">
+          <table class="cal-table">
+            <thead>
+              <tr>
+                <th>Turno</th>
+                <th id="cal-h0"></th>
+                <th id="cal-h1"></th>
+                <th id="cal-h2"></th>
+                <th id="cal-h3"></th>
+                <th id="cal-h4"></th>
+                <th id="cal-h5"></th>
+                <th id="cal-h6"></th>
+              </tr>
+            </thead>
+            <tbody id="tbody-cal"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── REPORTES ─── -->
+    <div class="tab-panel" id="panel-reportes">
+      <div class="card">
+        <div class="card-title">Filtros de Reporte</div>
+        <div class="filtros-grid">
+          <div class="form-group" style="margin:0">
+            <label>Guardia</label>
+            <select id="filtro-guardia"><option value="">Todos</option></select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Fecha inicio</label>
+            <input type="date" id="filtro-desde">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Fecha fin</label>
+            <input type="date" id="filtro-hasta">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Tipo</label>
+            <select id="filtro-tipo">
+              <option value="">Todos</option>
+              <option value="ronda">Ronda</option>
+              <option value="incidente">Incidente</option>
+              <option value="entrega_turno">Entrega Turno</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Punto de Acceso</label>
+            <select id="filtro-punto"><option value="">Todos</option></select>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn-save" onclick="aplicarFiltros()">Aplicar filtros</button>
+          <button class="btn-secondary" onclick="exportarExcel()">⬇ Exportar Excel</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📋 Actividad</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Guardia</th>
+                <th>Tipo</th>
+                <th>Punto</th>
+                <th>Descripción</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-reporte">
+              <tr><td colspan="6" class="cell-loading">Aplica filtros para ver resultados</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📊 Resumen</div>
+        <div class="resumen-grid">
+          <div class="resumen-card">
+            <div class="r-value" id="res-ronda">0</div>
+            <div class="r-label">Rondas</div>
+          </div>
+          <div class="resumen-card">
+            <div class="r-value" id="res-incidente">0</div>
+            <div class="r-label">Incidentes</div>
+          </div>
+          <div class="resumen-card">
+            <div class="r-value" id="res-entrega">0</div>
+            <div class="r-label">Entregas</div>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="chart-actividad"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV mobile -->
+  <nav class="bottom-nav">
+    <div class="bottom-nav-inner">
+      <button class="bottom-nav-btn activo" data-tab="dashboard"><span class="nav-icon">📊</span>Dashboard</button>
+      <button class="bottom-nav-btn" data-tab="guardias"><span class="nav-icon">👮</span>Guardias</button>
+      <button class="bottom-nav-btn" data-tab="calendario"><span class="nav-icon">📅</span>Calendario</button>
+      <button class="bottom-nav-btn" data-tab="reportes"><span class="nav-icon">📈</span>Reportes</button>
+    </div>
+  </nav>
+</div>
+
+<!-- MODAL GUARDIA -->
+<div class="modal-bg" id="modal-guardia">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-guardia-titulo">Nuevo Guardia</span>
+      <button class="btn-modal-close" onclick="cerrarModal('modal-guardia')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="msg-modal-guardia" class="mensaje"></div>
+      <input type="hidden" id="guardia-id">
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" id="guardia-nombre" placeholder="Nombre completo">
+      </div>
+      <div class="form-group">
+        <label>Contraseña <span id="pass-hint" style="color:var(--ink-mid);font-weight:400;font-size:0.72rem;display:none">(dejar vacío para no cambiar)</span></label>
+        <input type="password" id="guardia-password" placeholder="••••••••">
+      </div>
+      <div class="form-group">
+        <label>Rol</label>
+        <select id="guardia-rol">
+          <option value="guardia">Guardia</option>
+          <option value="supervisor">Supervisor</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Punto Default</label>
+        <select id="guardia-punto"><option value="">— Sin asignar —</option></select>
+      </div>
+      <div class="form-group" id="grupo-estado" style="display:none">
+        <label>Estado</label>
+        <div class="toggle-wrap">
+          <label class="toggle">
+            <input type="checkbox" id="guardia-activo" checked>
+            <span class="toggle-track"></span>
+          </label>
+          <span class="toggle-label">Activo</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="cerrarModal('modal-guardia')">Cancelar</button>
+      <button class="btn-save" id="btn-guardar-guardia" onclick="guardarGuardia()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CALENDARIO -->
+<div class="modal-bg" id="modal-cal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-cal-titulo">Asignar Guardia</span>
+      <button class="btn-modal-close" onclick="cerrarModal('modal-cal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="msg-modal-cal" class="mensaje"></div>
+      <input type="hidden" id="cal-fecha">
+      <input type="hidden" id="cal-turno-id">
+      <div class="form-group">
+        <label>Guardia</label>
+        <select id="cal-guardia-sel"><option value="">— Selecciona —</option></select>
+      </div>
+      <div class="form-group">
+        <label>Punto</label>
+        <select id="cal-punto-sel"><option value="">— Selecciona —</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="cerrarModal('modal-cal')">Cancelar</button>
+      <button class="btn-save" onclick="guardarAsignacion()">Asignar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API       = 'https://paraiso-del-mar-backend.onrender.com';
+const TOKEN_KEY = 'pdm_seg_token';
+let token         = null;
+let usuarioActual = null;
+let puntosList    = [];
+let guardiasList  = [];
+let calSemanaOffset   = 0;
+let calAsignaciones   = [];
+let reporteChart      = null;
+let paginaHoy         = 1;
+let registrosHoyCache = [];
+
+const TURNOS = [
+  { id: 'matutino',   label: 'Matutino',   icon: '🌅' },
+  { id: 'vespertino', label: 'Vespertino', icon: '🌤' },
+  { id: 'nocturno',   label: 'Nocturno',   icon: '🌙' }
+];
+const DIAS = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+const PUNTOS_LABEL = { muelle: 'Muelle Principal', base4: 'Base 4', base1: 'Base 1' };
+const PUNTOS_DEFAULT = [
+  { id: 'muelle', nombre: 'Muelle Principal' },
+  { id: 'base4',  nombre: 'Base 4' },
+  { id: 'base1',  nombre: 'Base 1' }
+];
+
+// ══ AUTH ══
+document.getElementById('btn-login').addEventListener('click', async () => {
+  const usuario  = document.getElementById('login-usuario').value.trim();
+  const password = document.getElementById('login-password').value.trim();
+  if (!usuario || !password) return mostrarMsg('msg-login', 'Completa usuario y contraseña', 'error');
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  try {
+    const res = await fetch(`${API}/api/seguridad/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre: usuario, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.mensaje || 'Credenciales incorrectas');
+    const rol = (data.usuario || data).rol || '';
+    if (!['admin', 'supervisor'].includes(rol))
+      throw new Error('Acceso denegado: se requiere rol supervisor o admin');
+    token = data.token;
+    usuarioActual = data.usuario || data;
+    sessionStorage.setItem(TOKEN_KEY, token);
+    iniciarApp();
+  } catch(e) {
+    mostrarMsg('msg-login', e.message, 'error');
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+});
+
+document.getElementById('login-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('btn-login').click();
+});
+
+document.getElementById('btn-logout').addEventListener('click', () => {
+  sessionStorage.removeItem(TOKEN_KEY);
+  token = null; usuarioActual = null;
+  document.getElementById('pantalla-app').style.display = 'none';
+  document.getElementById('pantalla-login').style.display = 'flex';
+});
+
+function iniciarApp() {
+  document.getElementById('pantalla-login').style.display = 'none';
+  document.getElementById('pantalla-app').style.display = 'block';
+  document.getElementById('header-nombre').textContent = usuarioActual.nombre || '';
+  const rol = usuarioActual.rol || '';
+  const badge = document.getElementById('header-rol-badge');
+  badge.textContent = rol.toUpperCase();
+  badge.className = `badge-rol ${rol}`;
+  cargarDatosIniciales();
+}
+
+async function cargarDatosIniciales() {
+  await Promise.all([cargarPuntos(), cargarGuardiasList()]);
+  cargarDashboard();
+  cargarGuardiasTabla();
+  renderCalendario();
+  initReportes();
+}
+
+async function fetchConAuth(url, opciones = {}) {
+  const res = await fetch(url, {
+    ...opciones,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      ...(opciones.headers || {})
+    }
+  });
+  if (res.status === 401) { sessionStorage.removeItem(TOKEN_KEY); location.reload(); }
+  return res;
+}
+
+// ══ TABS ══
+function activarTab(tab) {
+  document.querySelectorAll('.tab-btn, .bottom-nav-btn').forEach(b =>
+    b.classList.toggle('activo', b.dataset.tab === tab));
+  document.querySelectorAll('.tab-panel').forEach(p =>
+    p.classList.toggle('activo', p.id === `panel-${tab}`));
+}
+
+document.querySelectorAll('.tab-btn, .bottom-nav-btn').forEach(btn =>
+  btn.addEventListener('click', () => activarTab(btn.dataset.tab)));
+
+// ══ PUNTOS ══
+async function cargarPuntos() {
+  try {
+    const res  = await fetchConAuth(`${API}/api/seguridad/puntos`);
+    const data = await res.json();
+    puntosList = data.data || data || [];
+    if (!puntosList.length) puntosList = PUNTOS_DEFAULT;
+  } catch(e) { puntosList = PUNTOS_DEFAULT; }
+  llenarSelectPuntos();
+}
+
+function llenarSelectPuntos() {
+  [
+    { id: 'guardia-punto',  empty: '— Sin asignar —' },
+    { id: 'cal-punto-sel',  empty: '— Selecciona —' },
+    { id: 'filtro-punto',   empty: 'Todos' }
+  ].forEach(({ id, empty }) => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    sel.innerHTML = `<option value="">${empty}</option>`;
+    puntosList.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id || p.slug || p;
+      opt.textContent = p.nombre || p.label || p;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+// ══ GUARDIAS (caché) ══
+async function cargarGuardiasList() {
+  try {
+    const res  = await fetchConAuth(`${API}/api/seguridad/guardias`);
+    const data = await res.json();
+    guardiasList = data.data || data || [];
+  } catch(e) { guardiasList = []; }
+  llenarSelectGuardias();
+}
+
+function llenarSelectGuardias() {
+  [
+    { id: 'cal-guardia-sel', empty: '— Selecciona —' },
+    { id: 'filtro-guardia',  empty: 'Todos' }
+  ].forEach(({ id, empty }) => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    sel.innerHTML = `<option value="">${empty}</option>`;
+    guardiasList.forEach(g => {
+      const opt = document.createElement('option');
+      opt.value = g.id; opt.textContent = g.nombre;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+// ══ DASHBOARD ══
+async function cargarDashboard() {
+  const hoy   = fechaHoy();
+  const lun   = fechaLunes();
+
+  // Registros hoy
+  try {
+    const res  = await fetchConAuth(`${API}/api/bitacoras?fecha_desde=${hoy}&fecha_hasta=${hoy}`);
+    const data = await res.json();
+    registrosHoyCache = data.data?.registros || data.registros || data.data || data || [];
+    if (!Array.isArray(registrosHoyCache)) registrosHoyCache = [];
+    document.getElementById('kpi-registros-hoy').textContent = registrosHoyCache.length;
+    document.getElementById('badge-hoy').textContent = registrosHoyCache.length;
+    paginaHoy = 1;
+    renderTablaHoy();
+  } catch(e) {
+    document.getElementById('kpi-registros-hoy').textContent = '—';
+  }
+
+  // Incidentes semana
+  try {
+    const res  = await fetchConAuth(`${API}/api/bitacoras?fecha_desde=${lun}&fecha_hasta=${hoy}&tipo=incidente`);
+    const data = await res.json();
+    const inc  = data.data?.registros || data.registros || data.data || data || [];
+    document.getElementById('kpi-incidentes').textContent = Array.isArray(inc) ? inc.length : 0;
+  } catch(e) {
+    document.getElementById('kpi-incidentes').textContent = '—';
+  }
+
+  // KPIs guardias
+  const activos = guardiasList.filter(g => g.activo !== false);
+  document.getElementById('kpi-guardias').textContent = activos.length;
+  const guardiaConReg = new Set(registrosHoyCache.map(r => r.guardia_id || r.usuario_id));
+  document.getElementById('kpi-sin-asignar').textContent = activos.filter(g => !guardiaConReg.has(g.id)).length;
+}
+
+function renderTablaHoy() {
+  const tbody   = document.getElementById('tbody-hoy');
+  const PER_PAGE = 10;
+  const total   = registrosHoyCache.length;
+  const start   = (paginaHoy - 1) * PER_PAGE;
+  const slice   = registrosHoyCache.slice(start, start + PER_PAGE);
+
+  if (!total) {
+    tbody.innerHTML = '<tr><td colspan="5" class="cell-loading">Sin registros hoy</td></tr>';
+    document.getElementById('pag-dashboard').innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = slice.map(r => {
+    const hora    = r.created_at ? new Date(r.created_at).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '—';
+    const guardia = r.guardia_nombre || r.usuario_nombre || r.nombre || '—';
+    const punto   = puntoLabel(r.punto_acceso);
+    const desc    = r.descripcion ? (r.descripcion.length > 55 ? r.descripcion.slice(0,55)+'…' : r.descripcion) : '—';
+    return `<tr>
+      <td>${hora}</td>
+      <td>${guardia}</td>
+      <td><span class="badge badge-${r.tipo}">${tipoBadgeLabel(r.tipo)}</span></td>
+      <td>${punto}</td>
+      <td>${desc}</td>
+    </tr>`;
+  }).join('');
+
+  const totalPages = Math.ceil(total / PER_PAGE);
+  document.getElementById('pag-dashboard').innerHTML = `
+    <button class="page-btn" onclick="cambiarPagHoy(${paginaHoy - 1})" ${paginaHoy <= 1 ? 'disabled' : ''}>&#8249;</button>
+    <span>Pág ${paginaHoy} / ${totalPages}</span>
+    <button class="page-btn" onclick="cambiarPagHoy(${paginaHoy + 1})" ${paginaHoy >= totalPages ? 'disabled' : ''}>&#8250;</button>
+  `;
+}
+
+function cambiarPagHoy(p) { paginaHoy = p; renderTablaHoy(); }
+
+// ══ GUARDIAS TAB ══
+async function cargarGuardiasTabla() {
+  const tbody = document.getElementById('tbody-guardias');
+  tbody.innerHTML = '<tr><td colspan="5" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr>';
+  try {
+    const res  = await fetchConAuth(`${API}/api/seguridad/guardias`);
+    const data = await res.json();
+    guardiasList = data.data || data || [];
+    llenarSelectGuardias();
+    if (!guardiasList.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="cell-loading">Sin guardias registrados</td></tr>';
+      return;
+    }
+    tbody.innerHTML = guardiasList.map(g => {
+      const activo = g.activo !== false;
+      return `<tr>
+        <td>${g.nombre}</td>
+        <td><span class="badge badge-${g.rol || 'guardia'}">${g.rol || 'guardia'}</span></td>
+        <td>${puntoLabel(g.punto_default || g.punto_id)}</td>
+        <td><span class="badge ${activo ? 'badge-activo' : 'badge-inactivo'}">${activo ? 'Activo' : 'Inactivo'}</span></td>
+        <td><button class="btn-action" onclick="abrirModalGuardia(${g.id})">Editar</button></td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="5" class="cell-loading" style="color:var(--error)">Error al cargar</td></tr>';
+  }
+}
+
+function abrirModalGuardia(id = null) {
+  const esEdicion = !!id;
+  document.getElementById('guardia-id').value    = id || '';
+  document.getElementById('guardia-nombre').value   = '';
+  document.getElementById('guardia-password').value = '';
+  document.getElementById('guardia-rol').value      = 'guardia';
+  document.getElementById('guardia-punto').value    = '';
+  document.getElementById('guardia-activo').checked = true;
+  document.getElementById('msg-modal-guardia').style.display = 'none';
+  document.getElementById('modal-guardia-titulo').textContent = esEdicion ? 'Editar Guardia' : 'Nuevo Guardia';
+  document.getElementById('pass-hint').style.display   = esEdicion ? 'inline' : 'none';
+  document.getElementById('grupo-estado').style.display = esEdicion ? 'block' : 'none';
+  if (esEdicion) {
+    const g = guardiasList.find(x => x.id == id);
+    if (g) {
+      document.getElementById('guardia-nombre').value = g.nombre || '';
+      document.getElementById('guardia-rol').value    = g.rol || 'guardia';
+      document.getElementById('guardia-punto').value  = g.punto_default || g.punto_id || '';
+      document.getElementById('guardia-activo').checked = g.activo !== false;
+    }
+  }
+  abrirModal('modal-guardia');
+}
+
+async function guardarGuardia() {
+  const id       = document.getElementById('guardia-id').value;
+  const nombre   = document.getElementById('guardia-nombre').value.trim();
+  const password = document.getElementById('guardia-password').value.trim();
+  const rol      = document.getElementById('guardia-rol').value;
+  const punto    = document.getElementById('guardia-punto').value;
+  const activo   = document.getElementById('guardia-activo').checked;
+
+  if (!nombre) return mostrarMsg('msg-modal-guardia', 'El nombre es requerido', 'error');
+  if (!id && !password) return mostrarMsg('msg-modal-guardia', 'La contraseña es requerida al crear', 'error');
+
+  const body = { nombre, rol, punto_default: punto, activo };
+  if (password) body.password = password;
+
+  const btn = document.getElementById('btn-guardar-guardia');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  try {
+    const url    = id ? `${API}/api/seguridad/guardias/${id}` : `${API}/api/seguridad/guardias`;
+    const method = id ? 'PUT' : 'POST';
+    const res  = await fetchConAuth(url, { method, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.mensaje || 'Error al guardar');
+    mostrarMsg('msg-app', id ? 'Guardia actualizado' : 'Guardia creado correctamente', 'ok');
+    cerrarModal('modal-guardia');
+    await cargarGuardiasList();
+    cargarGuardiasTabla();
+  } catch(e) {
+    mostrarMsg('msg-modal-guardia', e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Guardar';
+  }
+}
+
+// ══ CALENDARIO ══
+function lunesDeSemana(offset) {
+  const hoy  = new Date();
+  const dow  = hoy.getDay();
+  const diff = dow === 0 ? -6 : 1 - dow;
+  const lun  = new Date(hoy);
+  lun.setDate(hoy.getDate() + diff + offset * 7);
+  lun.setHours(0,0,0,0);
+  return lun;
+}
+
+function navSemana(dir) { calSemanaOffset += dir; renderCalendario(); }
+
+async function renderCalendario() {
+  const lunDate    = lunesDeSemana(calSemanaOffset);
+  const diasFechas = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(lunDate);
+    d.setDate(lunDate.getDate() + i);
+    return d;
+  });
+
+  const fmt = d => d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+  diasFechas.forEach((d, i) => {
+    document.getElementById(`cal-h${i}`).textContent = `${DIAS[i]} ${fmt(d)}`;
+  });
+  document.getElementById('cal-titulo').textContent =
+    `${fmt(diasFechas[0])} — ${fmt(diasFechas[6])} ${diasFechas[0].getFullYear()}`;
+
+  const desde = toISO(diasFechas[0]);
+  const hasta = toISO(diasFechas[6]);
+  try {
+    const res  = await fetchConAuth(`${API}/api/seguridad/calendario?fecha_desde=${desde}&fecha_hasta=${hasta}`);
+    const data = await res.json();
+    calAsignaciones = data.data || data || [];
+    if (!Array.isArray(calAsignaciones)) calAsignaciones = [];
+  } catch(e) { calAsignaciones = []; }
+
+  const tbody = document.getElementById('tbody-cal');
+  tbody.innerHTML = TURNOS.map(turno => `
+    <tr>
+      <td class="turno-cell">${turno.icon} ${turno.label}</td>
+      ${diasFechas.map(dia => {
+        const fechaStr = toISO(dia);
+        const asigs    = calAsignaciones.filter(a => a.turno === turno.id && (a.fecha || '').startsWith(fechaStr));
+        const chips    = asigs.map(a => `
+          <div class="cal-chip">
+            <span>${a.guardia_nombre || a.nombre || '—'}</span>
+            <span class="cal-chip-punto">${puntoLabel(a.punto_id || a.punto)}</span>
+            <button class="btn-chip-remove" onclick="eliminarAsignacion(${a.id})" title="Quitar">✕</button>
+          </div>`).join('');
+        return `<td><div class="cal-cell">${chips}
+          <button class="btn-cal-add" onclick="abrirModalCal('${fechaStr}','${turno.id}')">+ Asignar</button>
+        </div></td>`;
+      }).join('')}
+    </tr>`).join('');
+}
+
+function abrirModalCal(fecha, turnoId) {
+  document.getElementById('cal-fecha').value    = fecha;
+  document.getElementById('cal-turno-id').value = turnoId;
+  document.getElementById('cal-guardia-sel').value = '';
+  document.getElementById('cal-punto-sel').value   = '';
+  document.getElementById('msg-modal-cal').style.display = 'none';
+  const turnoLabel = TURNOS.find(t => t.id === turnoId)?.label || turnoId;
+  document.getElementById('modal-cal-titulo').textContent = `Asignar — ${turnoLabel} ${fecha}`;
+  abrirModal('modal-cal');
+}
+
+async function guardarAsignacion() {
+  const fecha     = document.getElementById('cal-fecha').value;
+  const turno     = document.getElementById('cal-turno-id').value;
+  const guardiaId = document.getElementById('cal-guardia-sel').value;
+  const puntoId   = document.getElementById('cal-punto-sel').value;
+  if (!guardiaId) return mostrarMsg('msg-modal-cal', 'Selecciona un guardia', 'warn');
+  try {
+    const res  = await fetchConAuth(`${API}/api/seguridad/calendario`, {
+      method: 'POST',
+      body: JSON.stringify({ guardia_id: parseInt(guardiaId), turno_id: turno, punto_id: puntoId, fecha })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.mensaje || 'Error al asignar');
+    cerrarModal('modal-cal');
+    renderCalendario();
+  } catch(e) { mostrarMsg('msg-modal-cal', e.message, 'error'); }
+}
+
+async function eliminarAsignacion(id) {
+  if (!confirm('¿Quitar esta asignación?')) return;
+  try {
+    const res = await fetchConAuth(`${API}/api/seguridad/calendario/${id}`, { method: 'DELETE' });
+    if (!res.ok) { const d = await res.json(); throw new Error(d.mensaje || 'Error'); }
+    renderCalendario();
+  } catch(e) { mostrarMsg('msg-app', e.message, 'error'); }
+}
+
+// ══ REPORTES ══
+function initReportes() {
+  const hace30 = new Date();
+  hace30.setDate(hace30.getDate() - 30);
+  document.getElementById('filtro-desde').value = toISO(hace30);
+  document.getElementById('filtro-hasta').value = fechaHoy();
+}
+
+async function aplicarFiltros() {
+  const guardiaId = document.getElementById('filtro-guardia').value;
+  const desde     = document.getElementById('filtro-desde').value;
+  const hasta     = document.getElementById('filtro-hasta').value;
+  const tipo      = document.getElementById('filtro-tipo').value;
+  const punto     = document.getElementById('filtro-punto').value;
+
+  const params = new URLSearchParams();
+  if (desde)     params.set('fecha_desde', desde);
+  if (hasta)     params.set('fecha_hasta', hasta);
+  if (tipo)      params.set('tipo', tipo);
+  if (punto)     params.set('punto_acceso', punto);
+  if (guardiaId) params.set('guardia_id', guardiaId);
+
+  const tbody = document.getElementById('tbody-reporte');
+  tbody.innerHTML = '<tr><td colspan="6" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr>';
+
+  try {
+    const res  = await fetchConAuth(`${API}/api/seguridad/reportes/actividad?${params}`);
+    const data = await res.json();
+    const registros = data.data?.registros || data.registros || data.data || data || [];
+
+    if (!Array.isArray(registros) || !registros.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="cell-loading">Sin resultados para los filtros aplicados</td></tr>';
+      resetResumen();
+      return;
+    }
+
+    tbody.innerHTML = registros.map(r => {
+      const fecha   = r.created_at ? new Date(r.created_at).toLocaleDateString('es-MX') : '—';
+      const hora    = r.created_at ? new Date(r.created_at).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }) : '—';
+      const guardia = r.guardia_nombre || r.usuario_nombre || r.nombre || '—';
+      const punto   = puntoLabel(r.punto_acceso);
+      const desc    = r.descripcion ? (r.descripcion.length > 65 ? r.descripcion.slice(0,65)+'…' : r.descripcion) : '—';
+      return `<tr>
+        <td>${fecha}</td>
+        <td>${hora}</td>
+        <td>${guardia}</td>
+        <td><span class="badge badge-${r.tipo}">${tipoBadgeLabel(r.tipo)}</span></td>
+        <td>${punto}</td>
+        <td>${desc}</td>
+      </tr>`;
+    }).join('');
+
+    actualizarResumen(registros);
+    renderChart(registros);
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="6" class="cell-loading" style="color:var(--error)">Error al cargar el reporte</td></tr>';
+  }
+}
+
+function resetResumen() {
+  ['res-ronda','res-incidente','res-entrega'].forEach(id => document.getElementById(id).textContent = '0');
+  if (reporteChart) { reporteChart.destroy(); reporteChart = null; }
+}
+
+function actualizarResumen(registros) {
+  const cnt = { ronda: 0, incidente: 0, entrega_turno: 0 };
+  registros.forEach(r => { if (cnt[r.tipo] !== undefined) cnt[r.tipo]++; });
+  document.getElementById('res-ronda').textContent     = cnt.ronda;
+  document.getElementById('res-incidente').textContent = cnt.incidente;
+  document.getElementById('res-entrega').textContent   = cnt.entrega_turno;
+}
+
+function renderChart(registros) {
+  const porGuardia = {};
+  registros.forEach(r => {
+    const nombre = r.guardia_nombre || r.usuario_nombre || r.nombre || 'Desconocido';
+    porGuardia[nombre] = (porGuardia[nombre] || 0) + 1;
+  });
+  if (reporteChart) reporteChart.destroy();
+  const ctx = document.getElementById('chart-actividad').getContext('2d');
+  reporteChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: Object.keys(porGuardia),
+      datasets: [{
+        label: 'Registros',
+        data: Object.values(porGuardia),
+        backgroundColor: 'rgba(0,124,137,0.7)',
+        borderColor: '#007c89',
+        borderWidth: 1,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+  });
+}
+
+async function exportarExcel() {
+  const params = new URLSearchParams();
+  const desde  = document.getElementById('filtro-desde').value;
+  const hasta  = document.getElementById('filtro-hasta').value;
+  const tipo   = document.getElementById('filtro-tipo').value;
+  const punto  = document.getElementById('filtro-punto').value;
+  const gid    = document.getElementById('filtro-guardia').value;
+  if (desde) params.set('fecha_desde', desde);
+  if (hasta) params.set('fecha_hasta', hasta);
+  if (tipo)  params.set('tipo', tipo);
+  if (punto) params.set('punto_acceso', punto);
+  if (gid)   params.set('guardia_id', gid);
+  params.set('token', token);
+  window.open(`${API}/api/bitacoras/export?${params}`, '_blank');
+}
+
+// ══ MODAL HELPERS ══
+function abrirModal(id)  { document.getElementById(id).classList.add('visible'); }
+function cerrarModal(id) { document.getElementById(id).classList.remove('visible'); }
+
+document.querySelectorAll('.modal-bg').forEach(m =>
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('visible'); }));
+
+// ══ UTILS ══
+function fechaHoy() { return toISO(new Date()); }
+
+function fechaLunes() {
+  const hoy  = new Date();
+  const dow  = hoy.getDay();
+  const diff = dow === 0 ? -6 : 1 - dow;
+  const l = new Date(hoy);
+  l.setDate(hoy.getDate() + diff);
+  return toISO(l);
+}
+
+function toISO(d) {
+  const y  = d.getFullYear();
+  const m  = String(d.getMonth() + 1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dd}`;
+}
+
+function puntoLabel(val) {
+  if (!val) return '—';
+  if (PUNTOS_LABEL[val]) return PUNTOS_LABEL[val];
+  const p = puntosList.find(x => (x.id || x.slug) == val);
+  return p ? (p.nombre || p.label || val) : val;
+}
+
+function tipoBadgeLabel(tipo) {
+  const map = { ronda: 'Ronda', incidente: 'Incidente', entrega_turno: 'Entrega' };
+  return map[tipo] || tipo || '—';
+}
+
+function mostrarMsg(id, texto, tipo = 'ok') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = texto;
+  el.className = `mensaje ${tipo}`;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+// ══ AUTO-LOGIN ══
+window.addEventListener('DOMContentLoaded', () => {
+  const t = sessionStorage.getItem(TOKEN_KEY);
+  if (!t) return;
+  try {
+    const payload = JSON.parse(atob(t.split('.')[1]));
+    if (!['admin', 'supervisor'].includes(payload.rol)) {
+      sessionStorage.removeItem(TOKEN_KEY);
+      return;
+    }
+    token = t;
+    usuarioActual = payload;
+    iniciarApp();
+  } catch(e) { sessionStorage.removeItem(TOKEN_KEY); }
+});
+</script>
+</body>
+</html>
