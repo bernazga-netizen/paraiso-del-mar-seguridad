@@ -827,7 +827,7 @@ async function cargarHistorial() {
     const hoy = new Date().toISOString().split('T')[0];
     const res = await fetchConAuth(`${API}/api/bitacoras?fecha_desde=${hoy}&fecha_hasta=${hoy}`);
     const data = await res.json();
-    const registros = data.data || data.registros || data || [];
+    const registros = data.data?.registros || data.registros || data.data || data || [];
     document.getElementById('badge-total').textContent = registros.length;
     if (!registros.length) {
       container.innerHTML = '<div class="loading">Sin registros hoy</div>';
