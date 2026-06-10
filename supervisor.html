@@ -693,6 +693,7 @@ tbody td { padding: 10px 14px; color: var(--ink); vertical-align: middle; }
           <button class="btn-secondary" onclick="navSemana(-1)">&#8249; Anterior</button>
           <span class="cal-nav-title" id="cal-titulo"></span>
           <button class="btn-secondary" onclick="navSemana(1)">Siguiente &#8250;</button>
+          <button class="btn-secondary" onclick="imprimirCalendario()" style="margin-left:auto">🖨 Imprimir semana</button>
         </div>
         <div class="cal-table-wrap">
           <table class="cal-table">
@@ -1506,6 +1507,104 @@ function mostrarMsg(id, texto, tipo = 'ok') {
   el.className = `mensaje ${tipo}`;
   el.style.display = 'block';
   setTimeout(() => el.style.display = 'none', 4000);
+}
+
+// ══ IMPRIMIR CALENDARIO ══
+async function imprimirCalendario() {
+  const lunDate = lunesDeSemana(calSemanaOffset);
+  const diasFechas = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(lunDate);
+    d.setDate(lunDate.getDate() + i);
+    return d;
+  });
+  const desde = toISO(diasFechas[0]);
+  const hasta = toISO(diasFechas[6]);
+  const fmt = d => d.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' });
+
+  const res = await fetchConAuth(`${API}/api/seguridad/calendario?fecha_inicio=${desde}&fecha_fin=${hasta}`);
+  const data = await res.json();
+  const asigs = data.data || [];
+
+  const puntos = [...new Set(asigs.map(a => a.punto_nombre))].sort();
+  const turnos = [
+    { id: 1, nombre: 'Matutino',   hora: '06:00–14:00', color: '#e8f4f6', textColor: '#006b7a' },
+    { id: 2, nombre: 'Vespertino', hora: '14:00–22:00', color: '#fef6ec', textColor: '#a05c00' },
+    { id: 3, nombre: 'Nocturno',   hora: '22:00–06:00', color: '#ede7f6', textColor: '#4527a0' }
+  ];
+
+  let filas = '';
+  puntos.forEach(punto => {
+    filas += `<tr><td colspan="${9}" style="background:#e8f4f6;padding:4px 8px;font-size:10px;font-weight:600;color:#007c89;text-transform:uppercase;letter-spacing:0.5px">${punto}</td></tr>`;
+    turnos.forEach(turno => {
+      const asigsTurno = asigs.filter(a => a.punto_nombre === punto && a.turno_id === turno.id);
+      if (asigsTurno.length === 0 && !asigs.some(a => a.punto_nombre === punto)) return;
+      let celdas = '';
+      diasFechas.forEach(dia => {
+        const fechaStr = toISO(dia);
+        const asig = asigsTurno.find(a => (a.fecha || '').startsWith(fechaStr));
+        if (asig) {
+          const cobBadge = asig.es_cobertura ? '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#c87533;margin-left:3px;vertical-align:middle"></span>' : '';
+          const nota = asig.nota_excepcion ? `<div style="font-size:9px;color:#c87533;font-style:italic;margin-top:2px">${asig.nota_excepcion}</div>` : '';
+          celdas += `<td style="padding:5px 6px;border:0.5px solid #c2d8dd;vertical-align:top"><div style="font-size:11px;font-weight:500">${asig.guardia_nombre}${cobBadge}</div>${nota}</td>`;
+        } else {
+          celdas += `<td style="padding:5px 6px;border:0.5px solid #c2d8dd;color:#aaa;text-align:center;font-size:11px">—</td>`;
+        }
+      });
+      filas += `<tr>
+        <td style="padding:5px 6px;border:0.5px solid #c2d8dd;white-space:nowrap">
+          <div style="font-size:10px;font-weight:600;color:${turno.textColor};background:${turno.color};display:inline-block;padding:2px 6px;border-radius:4px">${turno.nombre}</div>
+          <div style="font-size:9px;color:#888;margin-top:2px">${turno.hora}</div>
+        </td>
+        ${celdas}
+      </tr>`;
+    });
+  });
+
+  const cabeceras = diasFechas.map(d => `<th style="background:#003660;color:#fff;padding:7px 6px;font-size:11px;font-weight:500;text-align:center">${fmt(d)}</th>`).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Rol Semanal — ${desde} al ${hasta}</title>
+<style>
+  @page { size: landscape; margin: 1cm; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; font-size: 11px; color: #1a2e3a; }
+  h2 { font-size: 14px; font-weight: 600; color: #003660; margin: 0 0 2px; }
+  p { font-size: 11px; color: #666; margin: 0 0 12px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border: 0.5px solid #c2d8dd; }
+  .legend { display: flex; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
+  .leg { display: flex; align-items: center; gap: 4px; font-size: 10px; color: #555; }
+  .leg-dot { width: 8px; height: 8px; border-radius: 50%; }
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head>
+<body>
+<h2>Rol Semanal de Seguridad — Paraíso del Mar</h2>
+<p>${desde} al ${hasta}</p>
+<table>
+  <thead>
+    <tr>
+      <th style="background:#003660;color:#fff;padding:7px 6px;font-size:11px;font-weight:500;text-align:left;width:110px">Turno</th>
+      ${cabeceras}
+    </tr>
+  </thead>
+  <tbody>${filas}</tbody>
+</table>
+<div class="legend">
+  <div class="leg"><span class="leg-dot" style="background:#006b7a"></span>Matutino 06–14</div>
+  <div class="leg"><span class="leg-dot" style="background:#a05c00"></span>Vespertino 14–22</div>
+  <div class="leg"><span class="leg-dot" style="background:#4527a0"></span>Nocturno 22–06</div>
+  <div class="leg"><span class="leg-dot" style="background:#c87533"></span>Cobertura</div>
+</div>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+  setTimeout(() => win.print(), 500);
 }
 
 // ══ MODAL NOTA EXCEPCION ══
