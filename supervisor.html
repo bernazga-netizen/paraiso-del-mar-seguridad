@@ -1387,13 +1387,16 @@ async function aplicarFiltros() {
       const guardia = r.guardia_nombre || r.usuario_nombre || r.nombre || '—';
       const punto   = puntoLabel(r.punto_acceso);
       const desc    = r.descripcion ? (r.descripcion.length > 65 ? r.descripcion.slice(0,65)+'…' : r.descripcion) : '—';
+      const firmasBtn = r.tipo === 'entrega_turno'
+        ? `<button class="btn-action" style="font-size:10px;padding:3px 8px;margin-top:4px" onclick="verFirmas(${r.id})">Ver firmas</button>`
+        : '';
       return `<tr>
         <td>${fecha}</td>
         <td>${hora}</td>
         <td>${guardia}</td>
         <td><span class="badge badge-${r.tipo}">${tipoBadgeLabel(r.tipo)}</span></td>
         <td>${punto}</td>
-        <td>${desc}</td>
+        <td>${desc}${firmasBtn}</td>
       </tr>`;
     }).join('');
 
@@ -1608,6 +1611,24 @@ async function imprimirCalendario() {
   setTimeout(() => win.print(), 500);
 }
 
+// ══ FIRMAS ══
+async function verFirmas(id) {
+  try {
+    const res  = await fetchConAuth(`${API}/api/bitacoras/${id}`);
+    const data = await res.json();
+    const r    = data.data || data;
+    document.getElementById('firmas-guardia-sal').textContent  = r.guardia_nombre || '—';
+    document.getElementById('firmas-guardia-ent').textContent  = r.guardia_entrante_nombre || '—';
+    document.getElementById('firmas-img-sal').src = r.firma_saliente || '';
+    document.getElementById('firmas-img-ent').src = r.firma_entrante || '';
+    document.getElementById('firmas-img-sal').style.display = r.firma_saliente ? 'block' : 'none';
+    document.getElementById('firmas-img-ent').style.display = r.firma_entrante ? 'block' : 'none';
+    abrirModal('modal-firmas');
+  } catch(e) {
+    mostrarMsg('msg-app', 'No se pudieron cargar las firmas', 'error');
+  }
+}
+
 // ══ MODAL NOTA EXCEPCION ══
 function mostrarModalNota(advertencias) {
   document.getElementById('nota-advertencias').textContent = advertencias;
@@ -1640,5 +1661,32 @@ window.addEventListener('DOMContentLoaded', () => {
   } catch(e) { sessionStorage.removeItem(TOKEN_KEY); }
 });
 </script>
+
+<!-- MODAL FIRMAS -->
+<div class="modal-bg" id="modal-firmas">
+  <div class="modal-box" style="max-width:500px">
+    <div class="modal-header">
+      <span class="modal-title">Firmas — Entrega de Turno</span>
+      <button class="btn-modal-close" onclick="cerrarModal('modal-firmas')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--ink-mid);margin-bottom:6px;text-transform:uppercase">Guardia Saliente</div>
+          <div id="firmas-guardia-sal" style="font-size:13px;font-weight:500;margin-bottom:8px"></div>
+          <img id="firmas-img-sal" style="width:100%;border:1px solid var(--border);border-radius:8px" alt="Firma saliente">
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--ink-mid);margin-bottom:6px;text-transform:uppercase">Guardia Entrante</div>
+          <div id="firmas-guardia-ent" style="font-size:13px;font-weight:500;margin-bottom:8px"></div>
+          <img id="firmas-img-ent" style="width:100%;border:1px solid var(--border);border-radius:8px" alt="Firma entrante">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="cerrarModal('modal-firmas')">Cerrar</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
