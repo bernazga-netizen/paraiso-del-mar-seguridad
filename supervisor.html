@@ -894,9 +894,9 @@ let paginaHoy         = 1;
 let registrosHoyCache = [];
 
 const TURNOS = [
-  { id: 'matutino',   label: 'Matutino',   icon: '🌅' },
-  { id: 'vespertino', label: 'Vespertino', icon: '🌤' },
-  { id: 'nocturno',   label: 'Nocturno',   icon: '🌙' }
+  { id: 1, label: 'Matutino',   icon: '🌅' },
+  { id: 2, label: 'Vespertino', icon: '🌤' },
+  { id: 3, label: 'Nocturno',   icon: '🌙' }
 ];
 const DIAS = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 const PUNTOS_LABEL = { muelle: 'Muelle Principal', base4: 'Base 4', base1: 'Base 1' };
@@ -1258,7 +1258,7 @@ async function renderCalendario() {
       <td class="turno-cell">${turno.icon} ${turno.label}</td>
       ${diasFechas.map(dia => {
         const fechaStr = toISO(dia);
-        const asigs    = calAsignaciones.filter(a => a.turno === turno.id && (a.fecha || '').startsWith(fechaStr));
+        const asigs    = calAsignaciones.filter(a => a.turno_id === turno.id && (a.fecha || '').startsWith(fechaStr));
         const chips    = asigs.map(a => `
           <div class="cal-chip">
             <span>${a.guardia_nombre || a.nombre || '—'}</span>
@@ -1266,7 +1266,7 @@ async function renderCalendario() {
             <button class="btn-chip-remove" onclick="eliminarAsignacion(${a.id})" title="Quitar">✕</button>
           </div>`).join('');
         return `<td><div class="cal-cell">${chips}
-          <button class="btn-cal-add" onclick="abrirModalCal('${fechaStr}','${turno.id}')">+ Asignar</button>
+          <button class="btn-cal-add" onclick="abrirModalCal('${fechaStr}',${turno.id})">+ Asignar</button>
         </div></td>`;
       }).join('')}
     </tr>`).join('');
