@@ -1266,7 +1266,7 @@ async function renderCalendario() {
             <button class="btn-chip-remove" onclick="eliminarAsignacion(${a.id})" title="Quitar">✕</button>
           </div>`).join('');
         return `<td><div class="cal-cell">${chips}
-          <button class="btn-cal-add" onclick="abrirModalCal('${fechaStr}',${turno.id})">+ Asignar</button>
+          <button class="btn-cal-add" onclick="abrirModalCal('${fechaStr}','${turno.id}')">+ Asignar</button>
         </div></td>`;
       }).join('')}
     </tr>`).join('');
