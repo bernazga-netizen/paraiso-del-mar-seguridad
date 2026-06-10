@@ -383,7 +383,7 @@ async function buscar(pagina = 1) {
   try {
     const res  = await fetchConAuth(`${API}/api/bitacoras?${buildQuery(pagina)}`);
     const data = await res.json();
-    const registros = data.data || data.registros || [];
+    const registros = data.data?.registros || data.registros || data.data || data || [];
     totalRegistros  = data.total || registros.length;
     actualizarStats(registros);
     renderTabla(registros, container);
@@ -490,7 +490,7 @@ async function cargarAuditoria() {
   try {
     const res  = await fetchConAuth(`${API}/api/bitacoras/auditoria`);
     const data = await res.json();
-    const registros = data.data || data || [];
+    const registros = data.data?.registros || data.registros || data.data || data || [];
     if (!registros.length) {
       container.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><p>Sin eventos de auditoría</p></div>';
       return;
