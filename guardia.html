@@ -622,7 +622,7 @@ document.getElementById('btn-login').addEventListener('click', async () => {
   const btn = document.getElementById('btn-login');
   btn.disabled = true; btn.textContent = 'Entrando...';
   try {
-    const res = await fetch(`${API}/api/auth/login`, {
+    const res = await fetch(`${API}/api/seguridad/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nombre: usuario, password })
@@ -749,11 +749,11 @@ function getFirmaDataURL(id) {
 // ══ GUARDIAS ══
 async function cargarGuardias() {
   try {
-    const res = await fetch(`${API}/api/auth/usuarios-publico`);
+    const res = await fetch(`${API}/api/seguridad/auth/guardias`);
     const data = await res.json();
     const sel = document.getElementById('campo-guardia-entrante');
     sel.innerHTML = '<option value="">— Selecciona guardia entrante —</option>';
-    const lista = data.usuarios || data.data || data || [];
+    const lista = data.data || [];
     lista.forEach(u => {
       if (u.id !== usuarioActual?.id) {
         const opt = document.createElement('option');
