@@ -1283,22 +1283,33 @@ function abrirModalCal(fecha, turnoId) {
   abrirModal('modal-cal');
 }
 
-async function guardarAsignacion() {
+async function guardarAsignacion(nota_excepcion = null) {
   const fecha     = document.getElementById('cal-fecha').value;
-  const turno     = document.getElementById('cal-turno-id').value;
+  const turno     = parseInt(document.getElementById('cal-turno-id').value);
   const guardiaId = document.getElementById('cal-guardia-sel').value;
   const puntoId   = document.getElementById('cal-punto-sel').value;
+
   if (!guardiaId) return mostrarMsg('msg-modal-cal', 'Selecciona un guardia', 'warn');
+  if (!puntoId)   return mostrarMsg('msg-modal-cal', 'Selecciona un punto', 'warn');
+
+  const body = { guardia_id: parseInt(guardiaId), turno_id: turno, punto_id: parseInt(puntoId), fecha };
+  if (nota_excepcion) { body.nota_excepcion = nota_excepcion; body.es_cobertura = true; }
+
   try {
-    const res  = await fetchConAuth(`${API}/api/seguridad/calendario`, {
-      method: 'POST',
-      body: JSON.stringify({ guardia_id: parseInt(guardiaId), turno_id: parseInt(turno), punto_id: parseInt(puntoId), fecha })
-    });
+    const res  = await fetchConAuth(`${API}/api/seguridad/calendario`, { method: 'POST', body: JSON.stringify(body) });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.mensaje || 'Error al asignar');
+    if (res.status === 409 && data.requiere_nota) {
+      const lista = data.advertencias.map(a => '• ' + a).join('\n');
+      mostrarModalNota(lista);
+      return;
+    }
+    if (!res.ok) throw new Error(data.error || 'Error al asignar');
     cerrarModal('modal-cal');
+    cerrarModal('modal-nota-excepcion');
     renderCalendario();
-  } catch(e) { mostrarMsg('msg-modal-cal', e.message, 'error'); }
+  } catch(e) {
+    mostrarMsg('msg-modal-cal', e.message, 'error');
+  }
 }
 
 async function eliminarAsignacion(id) {
