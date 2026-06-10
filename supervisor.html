@@ -1144,28 +1144,42 @@ async function cargarGuardiasTabla() {
   }
 }
 
-function abrirModalGuardia(id = null) {
+async function abrirModalGuardia(id = null) {
   const esEdicion = !!id;
-  document.getElementById('guardia-id').value    = id || '';
-  document.getElementById('guardia-nombre').value   = '';
+  document.getElementById('guardia-id').value = id || '';
+  document.getElementById('guardia-nombre').value = '';
   document.getElementById('guardia-password').value = '';
-  document.getElementById('guardia-rol').value      = 'guardia';
-  document.getElementById('guardia-punto').value    = '';
-  document.getElementById('guardia-activo').checked = true;
-  document.getElementById('msg-modal-guardia').style.display = 'none';
-  document.getElementById('modal-guardia-titulo').textContent = esEdicion ? 'Editar Guardia' : 'Nuevo Guardia';
-  document.getElementById('pass-hint').style.display   = esEdicion ? 'inline' : 'none';
-  document.getElementById('grupo-estado').style.display = esEdicion ? 'block' : 'none';
+  document.getElementById('guardia-rol').value = 'guardia';
+  document.getElementById('guardia-punto').value = '';
+  const activoField = document.getElementById('guardia-activo');
+  if (activoField) activoField.checked = true;
+
+  const tituloModal = document.getElementById('modal-guardia-titulo');
+  if (tituloModal) tituloModal.textContent = esEdicion ? 'Editar Guardia' : 'Nuevo Guardia';
+
+  const campoActivo = document.getElementById('campo-activo-wrap');
+  if (campoActivo) campoActivo.style.display = esEdicion ? 'block' : 'none';
+
+  const campoPassword = document.getElementById('guardia-password-label');
+  if (campoPassword) campoPassword.textContent = esEdicion ? 'Nueva contraseña (dejar vacío para no cambiar)' : 'Contraseña';
+
   if (esEdicion) {
-    const g = guardiasList.find(x => x.id == id);
-    if (g) {
-      document.getElementById('guardia-nombre').value = g.nombre || '';
-      document.getElementById('guardia-rol').value    = g.rol || 'guardia';
-      document.getElementById('guardia-punto').value  = g.punto_default || g.punto_id || '';
-      document.getElementById('guardia-activo').checked = g.activo !== false;
+    try {
+      const res = await fetchConAuth(`${API}/api/seguridad/guardias`);
+      const data = await res.json();
+      const guardia = (data.data || []).find(g => g.id === id);
+      if (guardia) {
+        document.getElementById('guardia-nombre').value = guardia.nombre || '';
+        document.getElementById('guardia-rol').value = guardia.rol || 'guardia';
+        document.getElementById('guardia-punto').value = guardia.punto_default_id || '';
+        if (activoField) activoField.checked = guardia.activo !== false;
+      }
+    } catch(e) {
+      console.error('Error cargando guardia:', e);
     }
   }
-  abrirModal('modal-guardia');
+
+  document.getElementById('modal-guardia').style.display = 'flex';
 }
 
 async function guardarGuardia() {
