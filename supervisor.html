@@ -1246,7 +1246,7 @@ async function renderCalendario() {
   const desde = toISO(diasFechas[0]);
   const hasta = toISO(diasFechas[6]);
   try {
-    const res  = await fetchConAuth(`${API}/api/seguridad/calendario?fecha_desde=${desde}&fecha_hasta=${hasta}`);
+    const res  = await fetchConAuth(`${API}/api/seguridad/calendario?fecha_inicio=${desde}&fecha_fin=${hasta}`);
     const data = await res.json();
     calAsignaciones = data.data || data || [];
     if (!Array.isArray(calAsignaciones)) calAsignaciones = [];
@@ -1266,7 +1266,7 @@ async function renderCalendario() {
             <button class="btn-chip-remove" onclick="eliminarAsignacion(${a.id})" title="Quitar">✕</button>
           </div>`).join('');
         return `<td><div class="cal-cell">${chips}
-          <button class="btn-cal-add" onclick="abrirModalCal('${fechaStr}','${turno.id}')">+ Asignar</button>
+          <button class="btn-cal-add" onclick="abrirModalCal('${fechaStr}',${turno.id})">+ Asignar</button>
         </div></td>`;
       }).join('')}
     </tr>`).join('');
@@ -1292,7 +1292,7 @@ async function guardarAsignacion() {
   try {
     const res  = await fetchConAuth(`${API}/api/seguridad/calendario`, {
       method: 'POST',
-      body: JSON.stringify({ guardia_id: parseInt(guardiaId), turno_id: turno, punto_id: puntoId, fecha })
+      body: JSON.stringify({ guardia_id: parseInt(guardiaId), turno_id: parseInt(turno), punto_id: parseInt(puntoId), fecha })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.mensaje || 'Error al asignar');
