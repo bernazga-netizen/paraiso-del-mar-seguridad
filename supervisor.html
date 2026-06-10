@@ -880,6 +880,28 @@ tbody td { padding: 10px 14px; color: var(--ink); vertical-align: middle; }
   </div>
 </div>
 
+<!-- MODAL NOTA EXCEPCION -->
+<div class="modal-bg" id="modal-nota-excepcion">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">⚠️ Conflicto de Asignación</span>
+      <button class="btn-modal-close" onclick="cerrarModal('modal-nota-excepcion')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="msg-modal-nota" class="mensaje"></div>
+      <div id="nota-advertencias" style="background:#fef6ec;border:1px solid #f5ddb8;border-radius:8px;padding:12px;margin-bottom:16px;font-size:0.85rem;color:#c87533;white-space:pre-line"></div>
+      <div class="form-group">
+        <label>Nota de justificación <span style="color:var(--error)">*</span></label>
+        <textarea id="nota-excepcion-texto" placeholder="Explica el motivo de esta asignación especial... (mínimo 10 caracteres)" style="min-height:100px"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="cerrarModal('modal-nota-excepcion')">Cancelar</button>
+      <button class="btn-save" onclick="confirmarConNota()">Confirmar Asignación</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const API       = 'https://paraiso-del-mar-backend.onrender.com';
 const TOKEN_KEY = 'pdm_seg_token';
@@ -1484,6 +1506,22 @@ function mostrarMsg(id, texto, tipo = 'ok') {
   el.className = `mensaje ${tipo}`;
   el.style.display = 'block';
   setTimeout(() => el.style.display = 'none', 4000);
+}
+
+// ══ MODAL NOTA EXCEPCION ══
+function mostrarModalNota(advertencias) {
+  document.getElementById('nota-advertencias').textContent = advertencias;
+  document.getElementById('nota-excepcion-texto').value = '';
+  abrirModal('modal-nota-excepcion');
+}
+
+function confirmarConNota() {
+  const nota = document.getElementById('nota-excepcion-texto').value.trim();
+  if (!nota || nota.length < 10) {
+    mostrarMsg('msg-modal-nota', 'La nota debe tener al menos 10 caracteres', 'warn');
+    return;
+  }
+  guardarAsignacion(nota);
 }
 
 // ══ AUTO-LOGIN ══
