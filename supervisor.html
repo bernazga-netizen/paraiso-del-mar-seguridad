@@ -966,6 +966,9 @@ document.getElementById('btn-logout').addEventListener('click', () => {
   token = null; usuarioActual = null;
   document.getElementById('pantalla-app').style.display = 'none';
   document.getElementById('pantalla-login').style.display = 'flex';
+  const btnLogin = document.getElementById('btn-login');
+  btnLogin.disabled = false;
+  btnLogin.textContent = 'Entrar';
 });
 
 function iniciarApp() {
@@ -1351,6 +1354,7 @@ function initReportes() {
   hace30.setDate(hace30.getDate() - 30);
   document.getElementById('filtro-desde').value = toISO(hace30);
   document.getElementById('filtro-hasta').value = fechaHoy();
+  aplicarFiltros();
 }
 
 async function aplicarFiltros() {
