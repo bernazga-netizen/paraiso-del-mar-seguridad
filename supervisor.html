@@ -1009,6 +1009,10 @@ function activarTab(tab) {
     b.classList.toggle('activo', b.dataset.tab === tab));
   document.querySelectorAll('.tab-panel').forEach(p =>
     p.classList.toggle('activo', p.id === `panel-${tab}`));
+  document.querySelectorAll('.modal-bg').forEach(m => {
+    m.classList.remove('visible');
+    m.style.display = 'none';
+  });
 }
 
 document.querySelectorAll('.tab-btn, .bottom-nav-btn').forEach(btn =>
@@ -1271,6 +1275,10 @@ async function renderCalendario() {
 
   const desde = toISO(diasFechas[0]);
   const hasta = toISO(diasFechas[6]);
+
+  const tbody = document.getElementById('tbody-cal');
+  tbody.innerHTML = `<tr><td colspan="8" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr>`;
+
   try {
     const res  = await fetchConAuth(`${API}/api/seguridad/calendario?fecha_inicio=${desde}&fecha_fin=${hasta}`);
     const data = await res.json();
@@ -1278,7 +1286,6 @@ async function renderCalendario() {
     if (!Array.isArray(calAsignaciones)) calAsignaciones = [];
   } catch(e) { calAsignaciones = []; }
 
-  const tbody = document.getElementById('tbody-cal');
   tbody.innerHTML = TURNOS.map(turno => `
     <tr>
       <td class="turno-cell">${turno.icon} ${turno.label}</td>
