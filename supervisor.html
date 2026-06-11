@@ -25,6 +25,8 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+html { scroll-padding-top: 70px; }
+
 body {
   font-family: 'Segoe UI', system-ui, sans-serif;
   background: var(--dust);
@@ -449,7 +451,11 @@ tbody td { padding: 10px 14px; color: var(--ink); vertical-align: middle; }
   margin-bottom: 16px;
 }
 .cal-nav-title { font-size: 0.9rem; font-weight: 700; color: var(--navy); }
-.cal-table-wrap { overflow-x: auto; }
+.cal-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+}
 .cal-table { width: 100%; border-collapse: collapse; min-width: 620px; }
 .cal-table th {
   background: var(--navy);
